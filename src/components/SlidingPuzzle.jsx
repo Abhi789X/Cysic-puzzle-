@@ -1,81 +1,78 @@
 import React, { useState, useEffect } from "react";
-import Confetti from "react-confetti";
 
 const GRID_SIZE = 3;
-const TILE_SIZE = 100; // pixels
 
-const generateShuffledTiles = () => {
-  const tiles = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => i);
-  for (let i = tiles.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
-  }
-  return tiles;
-};
-
-const SlidingPuzzle = ({ image }) => {
-  const [tiles, setTiles] = useState(generateShuffledTiles());
-  const [gameWon, setGameWon] = useState(false);
-
-  const handleClick = (index) => {
-    const emptyIndex = tiles.indexOf(GRID_SIZE * GRID_SIZE - 1);
-    const isAdjacent =
-      [1, -1, GRID_SIZE, -GRID_SIZE].includes(index - emptyIndex) &&
-      Math.abs(Math.floor(index / GRID_SIZE) - Math.floor(emptyIndex / GRID_SIZE)) <= 1 &&
-      Math.abs((index % GRID_SIZE) - (emptyIndex % GRID_SIZE)) <= 1;
-
-    if (isAdjacent) {
-      const newTiles = [...tiles];
-      [newTiles[index], newTiles[emptyIndex]] = [newTiles[emptyIndex], newTiles[index]];
-      setTiles(newTiles);
-      checkWin(newTiles);
-    }
-  };
-
-  const checkWin = (tiles) => {
-    const isSolved = tiles.every((tile, index) => tile === index);
-    setGameWon(isSolved);
-  };
+export default function SlidingPuzzle({ image, onBack }) {
+  const [tiles, setTiles] = useState([]);
+  const [emptyIndex, setEmptyIndex] = useState(GRID_SIZE * GRID_SIZE - 1);
+  const [solved, setSolved] = useState(false);
 
   useEffect(() => {
-    checkWin(tiles);
-  }, []);
+    const temp = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => i);
+    for (let i = temp.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [temp[i], temp[j]] = [temp[j], temp[i]];
+    }
+    setTiles(temp);
+    setEmptyIndex(temp.indexOf(GRID_SIZE * GRID_SIZE - 1));
+  }, [image]);
+
+  function moveTile(i) {
+    const row = Math.floor(i / GRID_SIZE);
+    const col = i % GRID_SIZE;
+    const emptyRow = Math.floor(emptyIndex / GRID_SIZE);
+    const emptyCol = emptyIndex % GRID_SIZE;
+
+    if (
+      (Math.abs(row - emptyRow) === 1 && col === emptyCol) ||
+      (Math.abs(col - emptyCol) === 1 && row === emptyRow)
+    ) {
+      const newTiles = [...tiles];
+      [newTiles[i], newTiles[emptyIndex]] = [newTiles[emptyIndex], newTiles[i]];
+      setTiles(newTiles);
+      setEmptyIndex(i);
+
+      if (newTiles.every((val, idx) => val === idx)) {
+        setSolved(true);
+      }
+    }
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
-      {gameWon && <Confetti />}
-      <h1 className="text-3xl font-bold mb-4">Sliding Puzzle Game</h1>
-      <div
-        className="grid"
-        style={{
-          gridTemplateColumns: `repeat(${GRID_SIZE}, ${TILE_SIZE}px)`,
-          gridTemplateRows: `repeat(${GRID_SIZE}, ${TILE_SIZE}px)`,
-          gap: "2px",
-        }}
-      >
-        {tiles.map((tile, index) => (
-          <div
-            key={index}
-            onClick={() => handleClick(index)}
-            className={`w-[${TILE_SIZE}px] h-[${TILE_SIZE}px] border border-gray-600 ${
-              tile === GRID_SIZE * GRID_SIZE - 1 ? "bg-white" : "cursor-pointer"
-            }`}
-            style={{
-              backgroundImage:
-                tile === GRID_SIZE * GRID_SIZE - 1 ? "none" : `url(${image})`,
-              backgroundSize: `${TILE_SIZE * GRID_SIZE}px ${TILE_SIZE * GRID_SIZE}px`,
-              backgroundPosition: `-${(tile % GRID_SIZE) * TILE_SIZE}px -${
-                Math.floor(tile / GRID_SIZE) * TILE_SIZE
-              }px`,
-              backgroundRepeat: "no-repeat",
-              backgroundColor: tile === GRID_SIZE * GRID_SIZE - 1 ? "white" : "transparent",
-            }}
-          />
-        ))}
+    <div className="flex flex-col items-center">
+      <button onClick={onBack} className="mb-4 text-purple-400 underline self-start">
+        ← Back
+      </button>
+
+      <div className="grid grid-cols-3 gap-0 w-[300px] h-[300px] mx-auto border-2 border-cyan-500 overflow-hidden">
+        {tiles.map((tile, index) => 
+          tile === GRID_SIZE * GRID_SIZE - 1 ? (
+            <div 
+              key={index}
+              className="bg-black border border-white/30"
+              onClick={() => moveTile(index)}
+            />
+          ) : (
+            <div
+              key={index}
+              className="border border-white/30 cursor-pointer"
+              onClick={() => moveTile(index)}
+              style={{
+                backgroundImage: `url(${image})`,
+                backgroundSize: `${GRID_SIZE * 100}%`,
+                backgroundPosition: `-${(tile % GRID_SIZE) * 100}% -${Math.floor(tile / GRID_SIZE) * 100}%`,
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+          )
+        )}
       </div>
-      {gameWon && <p className="mt-4 text-green-400 font-semibold">Puzzle Solved! 🎉</p>}
+
+      {solved && (
+        <div className="mt-6 text-2xl text-green-400 font-bold animate-pulse">
+          🎉 ZK is the ENDGAME. Welcome to the Future. 🚀
+        </div>
+      )}
     </div>
   );
-};
-
-export default SlidingPuzzle;
+}
