@@ -59,9 +59,8 @@ export default function SlidingPuzzle({ image, onBack }) {
               onClick={() => moveTile(index)}
               style={{
                 backgroundImage: `url(${image})`,
-                backgroundSize: `${GRID_SIZE * 100}%`,
-                backgroundPosition: `-${(tile % GRID_SIZE) * 100}% -${Math.floor(tile / GRID_SIZE) * 100}%`,
-                backgroundRepeat: 'no-repeat'
+                backgroundSize: `${GRID_SIZE * 100}% ${GRID_SIZE * 100}%`,
+                backgroundPosition: `-${(tile % GRID_SIZE) * (100 / GRID_SIZE)}% -${Math.floor(tile / GRID_SIZE) * (100 / GRID_SIZE)}%`,
               }}
             />
           )
